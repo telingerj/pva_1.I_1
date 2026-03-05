@@ -1,0 +1,1 @@
+V této složce je poslední test na OOP. máte k dispozici zadání tak jak se zobrazilo dopisujícím studentům, vzorový soubor (pokud si chcete vyzkoušet test napsat sami, vycházejte z tohoto souboru) a řešení, ve kterém najdete spoustu komentářů vysvětlující postup.
