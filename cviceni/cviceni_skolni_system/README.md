@@ -1,0 +1,1 @@
+Tento adresář slouží k procvičení probrané látky - dědičnosti. Najdete zde zadání rozsahem a náročností blízké zadání testu. V souboru reseni.py naleznete jedno z možných řešení včetně vysvětlujících komentářů. Doporučuji si program zkusit napsat podle zadání a ujasnit si tak probranou látku. 
