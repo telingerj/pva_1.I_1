@@ -1,8 +1,10 @@
 #  hra, ve které bojují dvě armády proti sobě
 import random
 import pygame
+import time
 
 pygame.init()
+pygame.font.init()
 
 
 class Armada:
@@ -20,7 +22,7 @@ class Armada:
 
 
 class Postava:
-    def __init__(self, jmeno, zivot, pozice, textura_leva, textura_prava):
+    def __init__(self, jmeno, zivot, pozice, textura_leva, textura_prava, font):
         self.jmeno = jmeno
         self.zivot = zivot
         self.max_zivot = zivot
@@ -29,10 +31,14 @@ class Postava:
         self.textura_leva = textura_leva
         self.textura_prava = textura_prava
         self.otoceni = True  # výchozí otočení - doleva
+        self.font = font
+        self.textura_jmeno = None
 
 
     def pridej_armadu(self, armada):
         self.armada = armada
+        self.textura_jmeno = self.font.render(self.jmeno, False, self.armada.barva)
+        #self.textura_jmeno = pygame.transform.flip(self.textura_jmeno, True, False)
 
 
     def uber_zivot(self, zivoty):
@@ -56,6 +62,9 @@ class Postava:
         pygame.draw.rect(screen, (255, 0, 0),
                          (self.pozice[0] - 5, self.pozice[1] - 15, 30 * pomer_zivotu, 5))
 
+        screen.blit(self.textura_jmeno, (self.pozice[0] - 5, self.pozice[1] - 35))
+
+
 
     def pohyb(self):
         if self.otoceni:
@@ -63,23 +72,74 @@ class Postava:
         else:
             self.pozice = (self.pozice[0] + 1, self.pozice[1])
 
-        #TODO: otočení postavy když dorazí na kraj okna
+        if self.pozice[0] <= 0:
+            self.otoceni = False
+        elif self.pozice[0] >= 775:
+            self.otoceni = True
 
+
+    def vzdalenost(self, postava):
+        x1 = self.pozice[0]
+        y1 = self.pozice[1]
+        x2 = postava.pozice[0]
+        y2 = postava.pozice[1]
+
+        return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
 
 
 class Bojovnik(Postava):
-    def __init__(self, jmeno, zivot, pozice, poskozeni, textura_leva, textura_prava):
-        super().__init__(jmeno, zivot, pozice, textura_leva, textura_prava)
+    def __init__(self, jmeno, zivot, pozice, poskozeni, textura_leva, textura_prava, font, nepratelska_armada, polomer_utoku):
+        super().__init__(jmeno, zivot, pozice, textura_leva, textura_prava, font)
         self.poskozeni = poskozeni
+        self.nepratelska_armada = nepratelska_armada
+        self.polomer_utoku = polomer_utoku
+        self.cas_posledniho_utoku = 0
 
 
     def utok(self, postava):
         pass
 
 
+    def nejblizsi_nepritel(self):
+        nejmensi_vzdalenost = 10000
+        nejblizsi = None
+        for nepritel in self.nepratelska_armada.postavy:
+            vzdalenost = self.vzdalenost(nepritel)
+            if vzdalenost < nejmensi_vzdalenost:
+                nejblizsi = nepritel
+                nejmensi_vzdalenost = vzdalenost
+
+        return nejblizsi
+
+    def pohyb(self):
+
+        utoci = False
+        nejblizsi = self.nejblizsi_nepritel()
+        if self.vzdalenost(nejblizsi) < self.polomer_utoku:
+            utoci = True
+
+        if not utoci:
+            if self.otoceni:
+                self.pozice = (self.pozice[0] - 1, self.pozice[1])
+            else:
+                self.pozice = (self.pozice[0] + 1, self.pozice[1])
+
+            if self.pozice[0] <= 0:
+                self.otoceni = False
+            elif self.pozice[0] >= 775:
+                self.otoceni = True
+        else:
+            if time.time() - self.cas_posledniho_utoku > 1:
+                self.utok(nejblizsi)
+                self.cas_posledniho_utoku = time.time()
+
+
+
+
+
 class Lucistnik(Bojovnik):
-    def __init__(self, jmeno, zivot, pozice, poskozeni, pocet_sipu, textura_leva, textura_prava):
-        super().__init__(jmeno, zivot, pozice, poskozeni, textura_leva, textura_prava)
+    def __init__(self, jmeno, zivot, pozice, poskozeni, pocet_sipu, textura_leva, textura_prava, font, nepratelska_armada):
+        super().__init__(jmeno, zivot, pozice, poskozeni, textura_leva, textura_prava, font, nepratelska_armada, 300)
         self.pocet_sipu = pocet_sipu
 
 
@@ -89,8 +149,8 @@ class Lucistnik(Bojovnik):
 
 
 class Sermir(Bojovnik):
-    def __init__(self, jmeno, zivot, pozice, poskozeni, ucinnost_stitu, textura_leva, textura_prava):
-        super().__init__(jmeno, zivot, pozice, poskozeni, textura_leva, textura_prava)
+    def __init__(self, jmeno, zivot, pozice, poskozeni, ucinnost_stitu, textura_leva, textura_prava, font, nepratelska_armada):
+        super().__init__(jmeno, zivot, pozice, poskozeni, textura_leva, textura_prava, font, nepratelska_armada, 30)
         self.ucinnost_stitu = ucinnost_stitu
 
 
@@ -106,8 +166,8 @@ class Sermir(Bojovnik):
 
 
 class Kouzelnik(Postava):
-    def __init__(self, jmeno, zivot, pozice, uzdraveni, textura_leva, textura_prava):
-        super().__init__(jmeno, zivot, pozice, textura_leva, textura_prava)
+    def __init__(self, jmeno, zivot, pozice, uzdraveni, textura_leva, textura_prava, font):
+        super().__init__(jmeno, zivot, pozice, textura_leva, textura_prava, font)
         self.uzdraveni = uzdraveni
 
 
@@ -119,6 +179,7 @@ class Game:
         self.screen = pygame.display.set_mode((800, 800))
         self.clock = pygame.time.Clock()
         self.running = True
+        self.font = pygame.font.SysFont("Comic sans", 15)
         self.armady = []
         self.textury = []
         self.nacti_textury()
@@ -130,13 +191,13 @@ class Game:
         a1 = Armada("hodni", (0, 0, 255))
         a2 = Armada("zli", (255, 0, 0))
 
-        s1 = Sermir("Pepa", 100, (100, 100), 10, 10, self.textury[2], self.textury[3])
-        l1 = Lucistnik("Franta", 80, (80, 250), 10, 10, self.textury[0], self.textury[1])
-        k1 = Kouzelnik("Gandalf", 100, (100, 500), 5, self.textury[4], self.textury[5])
+        s1 = Sermir("Pepa", 100, (100, 100), 10, 10, self.textury[2], self.textury[3], self.font, a2)
+        l1 = Lucistnik("Franta", 80, (80, 250), 10, 10, self.textury[0], self.textury[1], self.font, a2)
+        k1 = Kouzelnik("Gandalf", 100, (100, 500), 5, self.textury[4], self.textury[5], self.font)
 
-        s2 = Sermir("Jakub", 120, (600, 100), 8, 5, self.textury[2], self.textury[3])
-        l2 = Lucistnik("Honza", 60, (620, 250), 10, 15, self.textury[0], self.textury[1])
-        k2 = Kouzelnik("Merlin", 100, (600, 500), 5, self.textury[4], self.textury[5])
+        s2 = Sermir("Jakub", 120, (600, 100), 8, 5, self.textury[2], self.textury[3], self.font, a1)
+        l2 = Lucistnik("Honza", 60, (620, 250), 10, 15, self.textury[0], self.textury[1], self.font, a1)
+        k2 = Kouzelnik("Merlin", 100, (600, 500), 5, self.textury[4], self.textury[5], self.font)
 
         a1.pridej_postavu(s1)
         a1.pridej_postavu(l1)
