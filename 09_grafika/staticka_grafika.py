@@ -1,9 +1,40 @@
 import pygame
 
+class AnimatedObject:
+    def __init__(self, x, y, r, color):
+        self.x = x
+        self.y = y
+        self.r = r
+        self.color = color
+        self.odraz_x = 1
+        self.odraz_y = 1
+
+    def draw(self, screen):
+        pygame.draw.circle(screen, self.color, (self.x, self.y), self.r)
+        self.check(screen)
+
+
+    def move(self, move_x, move_y):
+        self.x += move_x * self.odraz_x
+        self.y += move_y * self.odraz_y
+
+
+    def check(self, screen):
+        if screen.get_size()[0] - self.r <= self.x:
+            self.odraz_x = -1
+        elif self.r >= self.x:
+            self.odraz_x = 1
+
+        if screen.get_size()[1] - self.r <= self.y:
+            self.odraz_y = -1
+        elif self.r >= self.y:
+            self.odraz_y = 1
+
+
 pygame.init()
 clock = pygame.time.Clock()
 
-screen = pygame.display.set_mode((800, 800))
+screen = pygame.display.set_mode((800, 800), pygame.RESIZABLE)
 
 def draw_shapes():
     """
@@ -49,6 +80,20 @@ def snowman():
     pygame.draw.circle(screen, (110, 0, 0), (450, 285), 20, 5)
 
 
+"""
+def draw_animated_object(posX, posY):
+    pygame.draw.circle(screen, (255, 0, 0), (posX, posY), 50)
+
+x1 = 0
+x2 = 600
+y1 = 0
+
+"""
+
+kolecko1 = AnimatedObject(200, 100, 50, (255, 0, 0))
+kolecko2 = AnimatedObject(300, 100, 20, (0, 255, 0))
+kolecko3 = AnimatedObject(200, 300, 100, (0, 0, 0))
+
 running = True
 while running:
     for event in pygame.event.get():
@@ -56,8 +101,23 @@ while running:
             running = False
 
     screen.fill((166, 255, 251))
-    snowman()
     clock.tick(60)
+    """
+    draw_animated_object(x1, 200)  # pohyb doprava
+    draw_animated_object(x2, 200)  # pohyb doleva
+    draw_animated_object(200, y1)  # pohyb dolů
+    draw_animated_object(x1, y1)  # pohyb diagonálně doprava dolů
+    
+    x1 += 1
+    x2 -= 1
+    y1 += 1
+    """
+    kolecko1.draw(screen)
+    kolecko2.draw(screen)
+    kolecko3.draw(screen)
+    kolecko1.move(10, 10)
+    kolecko2.move(10, 0)
+    kolecko3.move(10, 5)
     pygame.display.flip()
 
 pygame.quit()
